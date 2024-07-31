@@ -76,9 +76,25 @@ contract PointsHook is BaseHook, ERC20 {
         if (!swapParams.zeroForOne) return (this.afterSwap.selector, 0); // only if buying tokens (giveing eth, taking token)
 
         uint256 ethSpent = uint256(int256(-delta.amount0()));
-        uint256 pointsForSwap = ethSpent/5;
+        uint256 pointsForSwap = ethSpent / 5;
 
         _assignPoints(hookData, pointsForSwap);
         return (this.afterSwap.selector, 0);
+    }
+
+    function afterAddLiquidity(
+        address,
+        PoolKey calldata key,
+        IPoolManager.ModifyLiquidityParams calldata,
+        BalanceDelta delta,
+        bytes calldata hookData
+    ) external override onlyByPoolManager returns (bytes4, BalanceDelta) {
+        if (!key.currency0.isNative()) return (this.afterAddLiquidity.selector, delta); // reject non native pools
+
+        uint256 pointsForAddingLiquidity = uint256(int256(-delta.amount0()));
+
+        _assignPoints(hookData, pointsForAddingLiquidity);
+
+        return (this.afterAddLiquidity.selector, delta);
     }
 }
